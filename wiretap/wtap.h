@@ -270,6 +270,7 @@ extern "C" {
 #define WTAP_ENCAP_IP_OVER_IB_PCAP              180
 #define WTAP_ENCAP_JUNIPER_VN                   181
 /* After adding new item here, please also add new item to encap_table_base array */
+#define WTAP_ENCAP_DS485                        0x12345
 
 #define WTAP_NUM_ENCAP_TYPES                    wtap_get_num_encap_types()
 

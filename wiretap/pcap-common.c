@@ -437,6 +437,9 @@ static const struct {
 	/* ISO14443 contactless smartcard standards */
 	{ 264,		WTAP_ENCAP_ISO14443 },
 
+	/* ds485 */
+	{ 0x12345679,	WTAP_ENCAP_DS485 },
+
 	/*
 	 * To repeat:
 	 *

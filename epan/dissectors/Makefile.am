@@ -517,6 +517,7 @@ DISSECTOR_SRC = \
 	packet-dpnss-link.c	\
 	packet-dpnss.c		\
 	packet-drda.c		\
+	packet-ds485.c		\
 	packet-dsi.c		\
 	packet-dsr.c		\
 	packet-dtcp-ip.c	\
@@ -1518,6 +1519,7 @@ DISSECTOR_INCLUDES = \
 	packet-disp.h		\
 	packet-dns.h		\
 	packet-dop.h		\
+	packet-ds485.h	\
 	packet-dsp.h		\
 	packet-dtls.h		\
 	packet-dtn.h		\
