@@ -117,7 +117,7 @@ static const value_string cont_flag_names[] = {
 #define DSM_CHANGE_LEAVE	0x1
 const true_false_string tfs_dsm_leave = { "leave", "join" };
 
-static hf_register_info hf_msg[] = {
+static hf_register_info hf_msg_ds485[] = {
 	{ &hf_ds485_msg_type,
 		{ "type", "ds485.type", FT_UINT8, BASE_HEX, VALS(packettypenames),
 			0x0, NULL, HFILL }},
@@ -225,31 +225,31 @@ static int decode_container(tvbuff_t *tvb, proto_tree *ds485_tree,
 	return 0;
 }
 
-static int decode_long_container(tvbuff_t *tvb, proto_tree *ds485_tree,
+static int decode_long_container(tvbuff_t *tvb, proto_tree *tree,
 								 bool dsm_api_data)
 {
 	ds485n_packet_t packet;
 	tvbuff_t *tvb_dsm_api = NULL;
 	int length;
 
-	proto_tree_add_item(ds485_tree, hf_ds485_cont_dst_dsid, tvb,
+	proto_tree_add_item(tree, hf_ds485_cont_dst_dsid, tvb,
 						offsetof(ds485n_packet_t, destinationId),
 						sizeof(packet.destinationId),
 						ENC_NA);
-	proto_tree_add_item(ds485_tree, hf_ds485_cont_src_dsid, tvb,
+	proto_tree_add_item(tree, hf_ds485_cont_src_dsid, tvb,
 						offsetof(ds485n_packet_t, sourceId),
 						sizeof(packet.sourceId),
 						ENC_NA);
-	proto_tree_add_item(ds485_tree,
+	proto_tree_add_item(tree,
 						hf_ds485_cont_type, tvb,
 						offsetof(ds485n_packet_t, containerType),
 						sizeof(packet.containerType),
 						ENC_LITTLE_ENDIAN);
-	proto_tree_add_item(ds485_tree, hf_ds485_long_cont_length, tvb,
+	proto_tree_add_item(tree, hf_ds485_long_cont_length, tvb,
 						offsetof(ds485n_packet_t, length),
 						sizeof(packet.length),
 						ENC_LITTLE_ENDIAN);
-	proto_tree_add_item(ds485_tree, hf_ds485_cont_transaction_id, tvb,
+	proto_tree_add_item(tree, hf_ds485_cont_transaction_id, tvb,
 						offsetof(ds485n_packet_t, transactionId),
 						sizeof(packet.transactionId),
 						ENC_LITTLE_ENDIAN);
@@ -259,13 +259,13 @@ static int decode_long_container(tvbuff_t *tvb, proto_tree *ds485_tree,
 		tvb_dsm_api = tvb_new_subset_length(tvb,
 											offsetof(ds485n_packet_t, data),
 											length);
-		decode_dsm_api(tvb_dsm_api, ds485_tree, length);
+		decode_dsm_api(tvb_dsm_api, tree, length);
 	}
 	return 0;
 }
 
-static int dissect_dS485_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree
-								 *tree, void *data)
+static int dissect_dS485_message(tvbuff_t *tvb, packet_info *pinfo,
+								 proto_tree *tree, void *data)
 {
 	guint8 packet_type = tvb_get_guint8(tvb, 0);
 	guint16 packet_len = tvb_get_letohs(tvb, 1);
@@ -411,7 +411,7 @@ static void dissect_dS485(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 void proto_register_dS485(void)
 {
 	proto_dS485 = proto_register_protocol("digitalSTROM 485", "dS485", "ds485");
-	proto_register_field_array(proto_dS485, hf_msg, array_length(hf_msg));
+	proto_register_field_array(proto_dS485, hf_msg_ds485, array_length(hf_msg_ds485));
 	proto_register_subtree_array(ett, array_length(ett));
 
 #if 0
