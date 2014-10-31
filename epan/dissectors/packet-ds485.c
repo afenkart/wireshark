@@ -176,29 +176,29 @@ static int decode_container_header(tvbuff_t *tvb, proto_tree *ds485_tree)
 	ds485_container_t container;
 
 	proto_tree_add_item(ds485_tree, hf_ds485_cont_dst_dsid, tvb,
-						offsetof(ds485_container_t, destinationId) + 3,
+						offsetof(ds485_container_t, destinationId),
 						sizeof(container.destinationId),
 						ENC_NA);
 	proto_tree_add_item(ds485_tree, hf_ds485_cont_src_dsid, tvb,
-						offsetof(ds485_container_t, sourceId) + 3,
+						offsetof(ds485_container_t, sourceId),
 						sizeof(container.sourceId),
 						ENC_NA);
 	proto_tree_add_item(ds485_tree,
 						hf_ds485_cont_type, tvb,
-						offsetof(ds485_container_t, containerType) + 3,
+						offsetof(ds485_container_t, containerType),
 						sizeof(container.containerType),
 						ENC_LITTLE_ENDIAN);
 	proto_tree_add_item(ds485_tree,
 						hf_ds485_cont_flags, tvb,
-						offsetof(ds485_container_t, containerFlags) + 3,
+						offsetof(ds485_container_t, containerFlags),
 						sizeof(container.containerFlags),
 						ENC_LITTLE_ENDIAN);
 	proto_tree_add_item(ds485_tree, hf_ds485_cont_length, tvb,
-						offsetof(ds485_container_t, length) + 3,
+						offsetof(ds485_container_t, length),
 						sizeof(container.length),
 						ENC_LITTLE_ENDIAN);
 	proto_tree_add_item(ds485_tree, hf_ds485_cont_transaction_id, tvb,
-						offsetof(ds485_container_t, transactionId) + 3,
+						offsetof(ds485_container_t, transactionId),
 						sizeof(container.transactionId),
 						ENC_LITTLE_ENDIAN);
 	return 0;
@@ -209,24 +209,24 @@ static int decode_long_container_header(tvbuff_t *tvb, proto_tree *ds485_tree)
 	ds485n_packet_t packet;
 
 	proto_tree_add_item(ds485_tree, hf_ds485_cont_dst_dsid, tvb,
-						offsetof(ds485n_packet_t, destinationId) + 3,
+						offsetof(ds485n_packet_t, destinationId),
 						sizeof(packet.destinationId),
 						ENC_NA);
 	proto_tree_add_item(ds485_tree, hf_ds485_cont_src_dsid, tvb,
-						offsetof(ds485n_packet_t, sourceId) + 3,
+						offsetof(ds485n_packet_t, sourceId),
 						sizeof(packet.sourceId),
 						ENC_NA);
 	proto_tree_add_item(ds485_tree,
 						hf_ds485_cont_type, tvb,
-						offsetof(ds485n_packet_t, containerType) + 3,
+						offsetof(ds485n_packet_t, containerType),
 						sizeof(packet.containerType),
 						ENC_LITTLE_ENDIAN);
 	proto_tree_add_item(ds485_tree, hf_ds485_long_cont_length, tvb,
-						offsetof(ds485n_packet_t, length) + 3,
+						offsetof(ds485n_packet_t, length),
 						sizeof(packet.length),
 						ENC_LITTLE_ENDIAN);
 	proto_tree_add_item(ds485_tree, hf_ds485_cont_transaction_id, tvb,
-						offsetof(ds485n_packet_t, transactionId) + 3,
+						offsetof(ds485n_packet_t, transactionId),
 						sizeof(packet.transactionId),
 						ENC_LITTLE_ENDIAN);
 	return 0;
@@ -239,6 +239,7 @@ static int dissect_dS485_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree
 	guint16 packet_len = tvb_get_letohs(tvb, 1);
 	proto_item *ti = NULL;
 	proto_tree *ds485_tree = NULL;
+	tvbuff_t *tvb_container = NULL;
 	int offset;
 	(void)data;
 
@@ -260,6 +261,9 @@ static int dissect_dS485_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree
 	proto_tree_add_item(ds485_tree, hf_ds485_msg_size, tvb, 1, 2,
 						ENC_LITTLE_ENDIAN);
 
+	/* strip tag / length field */
+	tvb_container = tvb_new_subset_length(tvb, 3, packet_len - 3);
+
 	switch (packet_type) {
 	case DS485D_CMD_API_REVISION:
 		proto_tree_add_item(ds485_tree, hf_ds485_api_revision, tvb, 3, 1,
@@ -271,7 +275,7 @@ static int dissect_dS485_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree
 
 	case DS485D_CMD_TX_PACKET:
 	case DS485D_CMD_RX_PACKET:
-		decode_container_header(tvb, ds485_tree);
+		decode_container_header(tvb_container, ds485_tree);
 		proto_tree_add_item(ds485_tree, hf_ds485_cont_data, tvb,
 							offsetof(ds485_container_t, data) + 3,
 							packet_len - offsetof(ds485_container_t, data)
@@ -280,7 +284,7 @@ static int dissect_dS485_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree
 
 	case DS485N_CMD_LONG_RX_PACKET:
 	case DS485N_CMD_LONG_TX_PACKET:
-		decode_long_container_header(tvb, ds485_tree);
+		decode_long_container_header(tvb_container, ds485_tree);
 		proto_tree_add_item(ds485_tree, hf_ds485_long_cont_data, tvb,
 							offsetof(ds485n_packet_t, data) + 3, packet_len
 							- offsetof(ds485n_packet_t, data) - 3,
@@ -326,7 +330,7 @@ static int dissect_dS485_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree
 		break;
 
 	case DS485D_CMD_BUS_CHANGE:
-		decode_container_header(tvb, ds485_tree);
+		decode_container_header(tvb_container, ds485_tree);
 		proto_tree_add_item(ds485_tree, hf_ds485_bus_change_event, tvb,
 							offsetof(ds485_container_t, data) + 3,
 							1, ENC_NA);
@@ -339,7 +343,7 @@ static int dissect_dS485_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree
 			break;
 		}
 
-		decode_container_header(tvb, ds485_tree);
+		decode_container_header(tvb_container, ds485_tree);
 		proto_tree_add_item(ds485_tree, hf_ds485_query_busstate,
 							tvb,
 							offsetof(ds485_container_t, data) + 3,
