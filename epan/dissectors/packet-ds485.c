@@ -66,10 +66,15 @@ static int hf_ds485_cont_data = -1;
 static int hf_ds485_cont_transaction_id = -1;
 static int hf_ds485_bus_change_event = -1;
 static int hf_ds485_long_cont_length = -1;
-static int hf_ds485_long_cont_data = -1;
 
+/* dsm-api fields */
+static int proto_dsmapi = -1;
+static int hf_dsm_call = -1;
+static int hf_dsm_modifier = -1;
+static int hf_dsm_remainder = -1;
 
 static gint ett_ds485 = -1;
+static gint ett_dsmapi = -1;
 
 static const value_string packettypenames[] = {
 	{ DS485D_CMD_SYNC,			"sync" },
@@ -163,21 +168,35 @@ static hf_register_info hf_msg_ds485[] = {
 	{ &hf_ds485_long_cont_length,
 		{ "length", "ds485.long_cont.length", FT_UINT16, BASE_HEX, NULL, 0x0,
 			NULL, HFILL }},
-	{ &hf_ds485_long_cont_data,
-		{ "data", "ds485.long_cont.data", FT_BYTES, BASE_NONE, NULL, 0x0, NULL, HFILL }},
+};
+
+static hf_register_info hf_msg_dsmapi[] = {
+	{ &hf_dsm_call,
+		{ "cmd", "dsmapi.cmd", FT_UINT8, BASE_HEX, NULL, 0x0, NULL, HFILL }},
+	{ &hf_dsm_modifier,
+		{ "modifier", "dsmapi.modifier", FT_UINT8, BASE_DEC, NULL, 0x0, NULL, HFILL }},
+	{ &hf_dsm_remainder,
+		{ "data", "dsmapi.remainder", FT_BYTES, BASE_NONE, NULL, 0x0, NULL, HFILL }},
 };
 
 static gint *ett[] = {
 	&ett_ds485,
+	&ett_dsmapi,
 };
 
 static int decode_dsm_api(tvbuff_t *tvb, proto_tree *ds485_tree, int len)
 {
-	(void)tvb;
-	(void)ds485_tree;
+	proto_tree *dsmapi_tree;
+	proto_item *ti = NULL;
 
-	proto_tree_add_item(ds485_tree, hf_ds485_cont_data, tvb, 0, len,
-						ENC_LITTLE_ENDIAN);
+	dsmapi_tree = proto_tree_add_subtree(ds485_tree, tvb, 0, -1, ett_dsmapi, &ti,
+										"dsmapi");
+	proto_tree_add_item(dsmapi_tree, hf_dsm_call, tvb, 0, 1, ENC_LITTLE_ENDIAN);
+	proto_tree_add_item(dsmapi_tree, hf_dsm_modifier, tvb, 1, 1, ENC_LITTLE_ENDIAN);
+	if (len > 2) {
+		proto_tree_add_item(dsmapi_tree, hf_dsm_remainder, tvb, 2, len - 2,
+							ENC_LITTLE_ENDIAN);
+	}
 	return 0;
 }
 
@@ -413,6 +432,10 @@ void proto_register_dS485(void)
 	proto_dS485 = proto_register_protocol("digitalSTROM 485", "dS485", "ds485");
 	proto_register_field_array(proto_dS485, hf_msg_ds485, array_length(hf_msg_ds485));
 	proto_register_subtree_array(ett, array_length(ett));
+
+	proto_dsmapi = proto_register_protocol("digitalSTROM API", "dS-API", "dsm-api");
+	proto_register_field_array(proto_dsmapi, hf_msg_dsmapi,
+							   array_length(hf_msg_dsmapi));
 
 #if 0
 	/* subdissector code */
