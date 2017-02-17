@@ -468,17 +468,20 @@ static int dissect_dS485_message(tvbuff_t *tvb, packet_info *pinfo,
 }
 
 static guint get_dS485_message_len(packet_info *pinfo __attribute__((unused)),
-								   tvbuff_t *tvb, int offset __attribute__((unused)))
+								   tvbuff_t *tvb, int offset __attribute__((unused)),
+								   void *data _U_)
 {
 	return tvb_get_letohs(tvb, offset + 1);
 }
 
 
 /* The main dissecting routine */
-static void dissect_dS485(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
+static int dissect_dS485(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_)
 {
 	tcp_dissect_pdus(tvb, pinfo, tree, TRUE, FRAME_HEADER_LEN,
 					 get_dS485_message_len, dissect_dS485_message, NULL);
+
+	return tvb_reported_length(tvb);
 }
 
 void proto_register_dS485(void)
